@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Briefing {{ briefing.date|date:"d/m/Y" }}{% endblock %}
+{% block page_title %}BRIEFING SESSION — {{ briefing.date|date:"d M Y" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <a href="{% url 'briefing:dashboard' %}" class="btn btn-sm btn-ghost mb-4 text-base-content/50">← Back</a>
+    <div class="ops-card rounded-xl p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-white">Night Briefing Session</h2>
+            <div class="badge text-sm px-4 py-3 risk-{{ briefing.overall_risk }}">{{ briefing.get_overall_risk_display }} Risk</div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div><span class="text-base-content/40 text-xs">Conducted By</span><div>{{ briefing.conducted_by.get_full_name|default:"—" }}</div></div>
+            <div><span class="text-base-content/40 text-xs">Time</span><div class="font-mono">{{ briefing.start_time|time:"H:i" }} - {{ briefing.end_time|time:"H:i" }}</div></div>
+            <div><span class="text-base-content/40 text-xs">Staff</span><div class="font-mono">{{ briefing.total_staff_present }}/{{ briefing.total_staff_expected }}</div></div>
+            <div><span class="text-base-content/40 text-xs">Forms</span><div class="font-mono">{{ forms.count }} submitted</div></div>
+        </div>
+    </div>
+
+    {% if briefing.safety_briefing %}<div class="ops-card rounded-xl p-5 mb-4"><h3 class="text-xs font-mono text-red-400/60 uppercase mb-2">Safety Briefing</h3><p class="text-sm text-base-content/70">{{ briefing.safety_briefing }}</p></div>{% endif %}
+    {% if briefing.key_decisions %}<div class="ops-card rounded-xl p-5 mb-4"><h3 class="text-xs font-mono text-amber-400/60 uppercase mb-2">Key Decisions</h3><p class="text-sm text-base-content/70">{{ briefing.key_decisions }}</p></div>{% endif %}
+    {% if briefing.escalations %}<div class="ops-card rounded-xl p-5 mb-4"><h3 class="text-xs font-mono text-red-400/60 uppercase mb-2">Escalations</h3><p class="text-sm text-base-content/70">{{ briefing.escalations }}</p></div>{% endif %}
+
+    {% if actions %}
+    <div class="ops-card rounded-xl p-5 mb-4">
+        <h3 class="text-xs font-mono text-cyan-400/60 uppercase mb-3">Action Items</h3>
+        {% for action in actions %}
+        <div class="flex items-center gap-3 p-2 rounded bg-base-content/3 mb-2">
+            <div class="badge badge-xs {% if action.status == 'done' %}badge-success{% elif action.status == 'in_progress' %}badge-warning{% else %}badge-ghost{% endif %}">{{ action.get_status_display }}</div>
+            <span class="text-sm flex-1">{{ action.description }}</span>
+            <span class="text-xs text-base-content/40">{{ action.assigned_to.get_full_name|default:"" }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

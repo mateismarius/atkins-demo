@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Resources{% endblock %}
+{% block page_title %}RESOURCES{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-2 mb-4">
+    <a href="{% url 'planning:resources' %}" class="btn btn-xs {% if not current_filter %}btn-warning{% else %}btn-ghost{% endif %}">All</a>
+    <a href="?type=vehicle" class="btn btn-xs {% if current_filter == 'vehicle' %}btn-warning{% else %}btn-ghost{% endif %}">Vehicles</a>
+    <a href="?type=equipment" class="btn btn-xs {% if current_filter == 'equipment' %}btn-warning{% else %}btn-ghost{% endif %}">Equipment</a>
+    <a href="?type=tool" class="btn btn-xs {% if current_filter == 'tool' %}btn-warning{% else %}btn-ghost{% endif %}">Tools</a>
+    <a href="?type=material" class="btn btn-xs {% if current_filter == 'material' %}btn-warning{% else %}btn-ghost{% endif %}">Materials</a>
+</div>
+
+<div class="ops-card rounded-xl p-5">
+    <table class="table table-sm">
+        <thead><tr class="text-xs text-base-content/40"><th>Name</th><th>Type</th><th>Status</th><th>Assigned To</th><th>Location</th><th>Last Inspection</th></tr></thead>
+        <tbody>
+            {% for r in resources %}
+            <tr class="hover:bg-base-content/5">
+                <td class="text-sm font-medium text-white">{{ r.name }}</td>
+                <td class="text-xs">{{ r.get_resource_type_display }}</td>
+                <td><span class="badge badge-xs {% if r.status == 'available' %}badge-success{% elif r.status == 'in_use' %}badge-warning{% elif r.status == 'maintenance' %}badge-error{% else %}badge-ghost{% endif %}">{{ r.get_status_display }}</span></td>
+                <td class="text-xs">{{ r.assigned_to.name|default:"—" }}</td>
+                <td class="text-xs text-base-content/50">{{ r.location|default:"—" }}</td>
+                <td class="text-xs font-mono">{{ r.last_inspection|date:"d/m/Y"|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-base-content/30">No resources</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

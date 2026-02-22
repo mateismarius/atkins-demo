@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Create Shift Plan{% endblock %}
+{% block page_title %}CREATE SHIFT PLAN{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <a href="{% url 'planning:dashboard' %}" class="btn btn-sm btn-ghost mb-4 text-base-content/50">← Back</a>
+
+    <div class="ops-card rounded-xl p-6">
+        <h2 class="text-lg font-bold text-amber-400 mb-4">New Shift Plan</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Date</span></label>
+                    {{ form.date }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Shift</span></label>
+                    {{ form.shift }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Notes</span></label>
+                    {{ form.notes }}
+                </div>
+
+                {% if form.errors %}
+                <div class="alert alert-error text-sm">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}{{ error }}{% endfor %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="flex justify-end gap-2 pt-4">
+                    <a href="{% url 'planning:dashboard' %}" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-warning gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Create Plan
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

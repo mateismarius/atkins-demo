@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}Night Report — {{ date|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-amber-400">Night Operations Report</h1>
+            <p class="text-gray-400 mt-1">{{ date|date:"l, d F Y" }} — AtkinsRéalis Heathrow</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-warning gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Download PDF
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </label>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-300 rounded-box w-64 mt-2">
+                    <li><a href="{% url 'reports:report_pdf' date|date:'Y-m-d' %}" class="gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Full Consolidated Report
+                    </a></li>
+                    <li class="border-t border-base-content/10 mt-1 pt-1"><a href="{% url 'reports:briefing_pdf' date|date:'Y-m-d' %}" class="gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Night Briefing Only
+                    </a></li>
+                    <li><a href="{% url 'reports:qa_pdf' date|date:'Y-m-d' %}" class="gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        QA Inspections Only
+                    </a></li>
+                    <li><a href="{% url 'reports:incidents_pdf' date|date:'Y-m-d' %}" class="gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        Incidents Only
+                    </a></li>
+                </ul>
+            </div>
+            <a href="{% url 'reports:dashboard' %}" class="btn btn-ghost btn-sm">Back</a>
+        </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="flex items-center gap-4 mb-6 p-3 bg-base-200 rounded-lg">
+        <span class="badge {% if report.overall_risk == 'green' %}badge-success{% elif report.overall_risk == 'amber' %}badge-warning{% else %}badge-error{% endif %} badge-lg gap-1 p-3">
+            RISK: {{ report.overall_risk|upper }}
+        </span>
+        <span class="badge {% if report.status == 'approved' %}badge-success{% elif report.status == 'reviewed' %}badge-info{% else %}badge-warning{% endif %} badge-lg p-3">
+            {{ report.get_status_display|upper }}
+        </span>
+        <span class="text-sm text-gray-400 ml-auto">Generated {{ report.updated_at|date:"H:i d/m/Y" }}</span>
+    </div>
+
+    <!-- =============== SECTION 1: EXECUTIVE SUMMARY =============== -->
+    <div class="card bg-base-200 shadow-lg mb-6 border border-amber-400/20">
+        <div class="card-body">
+            <h2 class="card-title text-amber-400 text-lg mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Executive Summary
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-3 bg-base-300 rounded-lg">
+                    <div class="text-2xl font-bold font-mono text-white">{{ briefing_forms.count }}/{{ teams.count }}</div>
+                    <div class="text-xs text-gray-400 mt-1">Teams Reporting</div>
+                </div>
+                <div class="text-center p-3 bg-base-300 rounded-lg">
+                    {% if total_staff_expected > 0 %}
+                    {% widthratio total_staff_present total_staff_expected 100 as staff_pct %}
+                    {% endif %}
+                    <div class="text-2xl font-bold font-mono text-white">{{ total_staff_present }}/{{ total_staff_expected }}</div>
+                    <div class="text-xs text-gray-400 mt-1">Staff Present</div>
+                </div>
+                <div class="text-center p-3 bg-base-300 rounded-lg">
+                    <div class="text-2xl font-bold font-mono text-cyan-400">{{ qa_forms.count }}</div>
+                    <div class="text-xs text-gray-400 mt-1">QA Inspections</div>
+                </div>
+                <div class="text-center p-3 bg-base-300 rounded-lg">
+                    <div class="text-2xl font-bold font-mono {% if incidents.count > 0 %}text-red-400{% else %}text-green-400{% endif %}">{{ incidents.count }}</div>
+                    <div class="text-xs text-gray-400 mt-1">Incidents</div>
+                </div>
+            </div>
+
+            <!-- Risk distribution -->
+            <div class="flex gap-4 mt-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span class="text-sm">Green: {{ risk_counts.green }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                    <span class="text-sm">Amber: {{ risk_counts.amber }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span class="text-sm">Red: {{ risk_counts.red }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== SECTION 2: NIGHT BRIEFING =============== -->
+    <div class="card bg-base-200 shadow-lg mb-6">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-cyan-400 text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Night Briefing Submissions
+                </h2>
+                <a href="{% url 'reports:briefing_pdf' date|date:'Y-m-d' %}" class="btn btn-ghost btn-xs text-cyan-400 gap-1" title="Download Briefing PDF">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    PDF
+                </a>
+            </div>
+            {% if briefing_forms %}
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th class="text-center">Staff</th>
+                            <th class="text-center">Equipment</th>
+                            <th class="text-center">PPE</th>
+                            <th class="text-center">Permits</th>
+                            <th class="text-center">Risk</th>
+                            <th>Planned Tasks</th>
+                            <th class="text-center">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in briefing_forms %}
+                        <tr class="hover">
+                            <td class="font-bold">{{ f.team.code }}</td>
+                            <td class="text-center font-mono">{{ f.staff_present }}/{{ f.staff_expected }}</td>
+                            <td class="text-center">
+                                {% if f.equipment_status == 'all_ok' %}<span class="badge badge-success badge-xs">OK</span>
+                                {% elif f.equipment_status == 'minor_issues' %}<span class="badge badge-warning badge-xs">MINOR</span>
+                                {% elif f.equipment_status == 'major_issues' %}<span class="badge badge-error badge-xs">MAJOR</span>
+                                {% else %}<span class="badge badge-error badge-xs">CRITICAL</span>{% endif %}
+                            </td>
+                            <td class="text-center">{% if f.ppe_check_completed %}<span class="text-green-400">&#10003;</span>{% else %}<span class="text-red-400 font-bold">&#10007;</span>{% endif %}</td>
+                            <td class="text-center">{% if f.permits_in_place %}<span class="text-green-400">&#10003;</span>{% else %}<span class="text-red-400 font-bold">&#10007;</span>{% endif %}</td>
+                            <td class="text-center">
+                                <span class="badge {% if f.risk_rating == 'green' %}badge-success{% elif f.risk_rating == 'amber' %}badge-warning{% else %}badge-error{% endif %} badge-xs">{{ f.risk_rating|upper }}</span>
+                            </td>
+                            <td class="text-sm max-w-xs truncate">{{ f.planned_tasks_tonight|truncatechars:60 }}</td>
+                            <td class="text-center font-mono text-xs">{{ f.submitted_at|date:"H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Safety Concerns -->
+            {% if safety_concerns %}
+            <div class="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+                <h3 class="font-bold text-red-400 mb-2">Safety Concerns</h3>
+                {% for code, name, concern in safety_concerns %}
+                <div class="mb-1 text-sm"><span class="font-bold text-white">{{ code }}:</span> {{ concern }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Blockers -->
+            {% for f in briefing_forms %}
+            {% if f.blockers %}
+            {% if forloop.first %}<div class="mt-4 p-3 bg-amber-900/20 border border-amber-500/30 rounded-lg"><h3 class="font-bold text-amber-400 mb-2">Blockers</h3>{% endif %}
+            <div class="mb-1 text-sm"><span class="font-bold text-white">{{ f.team.code }}:</span> {{ f.blockers }}</div>
+            {% if forloop.last %}</div>{% endif %}
+            {% endif %}
+            {% endfor %}
+
+            {% else %}
+            <p class="text-gray-500 text-center py-4">No briefing forms submitted for this date.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- =============== SECTION 3: QA INSPECTIONS =============== -->
+    <div class="card bg-base-200 shadow-lg mb-6">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-cyan-400 text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    QA Inspection Reports
+                    {% if qa_stats.total > 0 %}
+                    <span class="badge badge-info ml-2">Avg Compliance: {{ qa_stats.avg_compliance }}%</span>
+                    {% endif %}
+                </h2>
+                <a href="{% url 'reports:qa_pdf' date|date:'Y-m-d' %}" class="btn btn-ghost btn-xs text-green-400 gap-1" title="Download QA PDF">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    PDF
+                </a>
+            </div>
+            {% if qa_forms %}
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Area Inspected</th>
+                            <th>Project</th>
+                            <th class="text-center">Workmanship</th>
+                            <th class="text-center">Compliance</th>
+                            <th class="text-center">Snags</th>
+                            <th class="text-center">Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in qa_forms %}
+                        <tr class="hover">
+                            <td class="font-bold">{{ f.team.code }}</td>
+                            <td>{{ f.area_inspected }}</td>
+                            <td class="text-sm">{{ f.project.name|default:"-"|truncatechars:25 }}</td>
+                            <td class="text-center">
+                                {% if f.workmanship_quality == 'pass' %}<span class="badge badge-success badge-xs">Pass</span>
+                                {% elif f.workmanship_quality == 'minor' %}<span class="badge badge-warning badge-xs">Minor</span>
+                                {% elif f.workmanship_quality == 'major' %}<span class="badge badge-error badge-xs">Major</span>
+                                {% elif f.workmanship_quality == 'fail' %}<span class="badge badge-error badge-xs">Fail</span>
+                                {% else %}<span class="badge badge-ghost badge-xs">N/A</span>{% endif %}
+                            </td>
+                            <td class="text-center font-mono">
+                                <span class="{% if f.compliance_percentage >= 90 %}text-green-400{% elif f.compliance_percentage >= 70 %}text-amber-400{% else %}text-red-400{% endif %}">{{ f.compliance_percentage }}%</span>
+                            </td>
+                            <td class="text-center">
+                                {% if f.snags_count > 0 %}<span class="text-amber-400 font-bold">{{ f.snags_count }}</span>{% else %}<span class="text-green-400">0</span>{% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if f.overall_outcome == 'approved' %}<span class="badge badge-success badge-xs">Approved</span>
+                                {% elif f.overall_outcome == 'conditional' %}<span class="badge badge-warning badge-xs">Conditional</span>
+                                {% elif f.overall_outcome == 'rework' %}<span class="badge badge-error badge-xs">Rework</span>
+                                {% else %}<span class="badge badge-error badge-xs">Rejected</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- QA Summary stats -->
+            <div class="grid grid-cols-4 gap-3 mt-4">
+                <div class="text-center p-2 bg-base-300 rounded">
+                    <div class="text-lg font-bold text-green-400">{{ qa_stats.approved }}</div>
+                    <div class="text-xs text-gray-400">Approved</div>
+                </div>
+                <div class="text-center p-2 bg-base-300 rounded">
+                    <div class="text-lg font-bold text-amber-400">{{ qa_stats.conditional }}</div>
+                    <div class="text-xs text-gray-400">Conditional</div>
+                </div>
+                <div class="text-center p-2 bg-base-300 rounded">
+                    <div class="text-lg font-bold text-red-400">{{ qa_stats.rework }}</div>
+                    <div class="text-xs text-gray-400">Rework</div>
+                </div>
+                <div class="text-center p-2 bg-base-300 rounded">
+                    <div class="text-lg font-bold text-red-500">{{ qa_stats.rejected }}</div>
+                    <div class="text-xs text-gray-400">Rejected</div>
+                </div>
+            </div>
+
+            <!-- Snags & deviations details -->
+            {% for f in qa_forms %}
+            {% if f.snags_identified or f.deviations %}
+            {% if forloop.first %}<div class="mt-4 space-y-2">{% endif %}
+            <div class="p-2 bg-base-300 rounded">
+                <span class="font-bold text-amber-400">{{ f.team.code }} — {{ f.area_inspected }}:</span>
+                {% if f.snags_identified %}<div class="text-sm mt-1">Snags: {{ f.snags_identified }}</div>{% endif %}
+                {% if f.deviations %}<div class="text-sm mt-1 text-amber-300">Deviations: {{ f.deviations }}</div>{% endif %}
+            </div>
+            {% if forloop.last %}</div>{% endif %}
+            {% endif %}
+            {% endfor %}
+
+            {% else %}
+            <p class="text-gray-500 text-center py-4">No QA inspections submitted for this date.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- =============== SECTION 4: INCIDENTS =============== -->
+    <div class="card bg-base-200 shadow-lg mb-6">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-cyan-400 text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    Incidents & Near Misses
+                </h2>
+                <a href="{% url 'reports:incidents_pdf' date|date:'Y-m-d' %}" class="btn btn-ghost btn-xs text-red-400 gap-1" title="Download Incidents PDF">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    PDF
+                </a>
+            </div>
+            {% if incidents %}
+            {% for inc in incidents %}
+            <div class="p-3 mb-3 rounded-lg {% if inc.severity == 'serious' or inc.severity == 'major' %}bg-red-900/20 border border-red-500/30{% else %}bg-amber-900/20 border border-amber-500/30{% endif %}">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="badge {% if inc.severity == 'serious' %}badge-error{% elif inc.severity == 'major' %}badge-error{% elif inc.severity == 'minor' %}badge-warning{% else %}badge-info{% endif %} badge-sm">{{ inc.get_severity_display|upper }}</span>
+                    <span class="font-bold">{{ inc.title }}</span>
+                    <span class="text-xs text-gray-400 ml-auto">{{ inc.reported_at|date:"H:i" }} | {{ inc.team.code|default:"N/A" }}</span>
+                </div>
+                <p class="text-sm">{{ inc.description }}</p>
+                <p class="text-xs text-gray-400 mt-1">Location: {{ inc.location }} | Status: {{ inc.is_resolved|yesno:"Resolved,Open" }}</p>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="p-4 bg-green-900/20 border border-green-500/30 rounded-lg text-center">
+                <span class="text-green-400 font-bold">No incidents reported during this shift.</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- =============== SECTION 5: OPEN NCRs =============== -->
+    {% if open_ncrs %}
+    <div class="card bg-base-200 shadow-lg mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-cyan-400 text-lg mb-4">
+                Open Non-Conformance Reports ({{ open_ncrs.count }})
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead><tr><th>NCR #</th><th>Project</th><th>Title</th><th class="text-center">Severity</th><th class="text-center">Status</th><th>Due</th></tr></thead>
+                    <tbody>
+                        {% for ncr in open_ncrs %}
+                        <tr class="hover">
+                            <td class="font-mono">NCR-{{ ncr.id }}</td>
+                            <td class="text-sm">{{ ncr.project.name|truncatechars:20 }}</td>
+                            <td>{{ ncr.title }}</td>
+                            <td class="text-center"><span class="badge {% if ncr.severity == 'critical' %}badge-error{% elif ncr.severity == 'major' %}badge-warning{% else %}badge-info{% endif %} badge-xs">{{ ncr.get_severity_display }}</span></td>
+                            <td class="text-center"><span class="badge badge-ghost badge-xs">{{ ncr.get_status_display }}</span></td>
+                            <td class="font-mono text-xs">{{ ncr.due_date|date:"d/m/y"|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- =============== SECTION 6: MANAGER NOTES =============== -->
+    <div class="card bg-base-200 shadow-lg mb-6 border border-cyan-400/20">
+        <div class="card-body">
+            <h2 class="card-title text-cyan-400 text-lg mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Manager Notes & Handover
+            </h2>
+            <form method="post">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">Night Manager Summary</span></label>
+                        <textarea name="manager_summary" class="textarea textarea-bordered w-full" rows="3" placeholder="Overall shift summary...">{{ report.manager_summary }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">Key Issues</span></label>
+                        <textarea name="key_issues" class="textarea textarea-bordered w-full" rows="3" placeholder="Key issues to flag...">{{ report.key_issues }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">Handover to Day Shift</span></label>
+                        <textarea name="handover_notes" class="textarea textarea-bordered w-full" rows="3" placeholder="What day shift needs to know...">{{ report.handover_notes }}</textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="submit" class="btn btn-info gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Save & Mark Reviewed
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Download bar -->
+    <div class="flex flex-wrap justify-center gap-3 mb-8">
+        <a href="{% url 'reports:report_pdf' date|date:'Y-m-d' %}" class="btn btn-warning gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Full Report PDF
+        </a>
+        <a href="{% url 'reports:briefing_pdf' date|date:'Y-m-d' %}" class="btn btn-outline btn-info gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Briefing PDF
+        </a>
+        <a href="{% url 'reports:qa_pdf' date|date:'Y-m-d' %}" class="btn btn-outline btn-success gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            QA PDF
+        </a>
+        <a href="{% url 'reports:incidents_pdf' date|date:'Y-m-d' %}" class="btn btn-outline btn-error gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Incidents PDF
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block page_title %}PROJECT: {{ project.code }}{% endblock %}
+
+{% block content %}
+<!-- Project Header -->
+<div class="ops-card rounded-xl p-6 mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-white mb-1">{{ project.name }}</h2>
+            <p class="text-sm text-base-content/50">{{ project.description }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'projects:kanban' project.pk %}" class="btn btn-sm btn-warning">Kanban Board</a>
+            <div class="badge text-xs
+                {% if project.status == 'active' %}badge-success{% elif project.status == 'on_hold' %}badge-warning{% else %}badge-ghost{% endif %}">
+                {{ project.get_status_display }}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+        <div>
+            <div class="text-xs text-base-content/40 mb-1">Priority</div>
+            <div class="badge {% if project.priority == 'critical' %}badge-error{% elif project.priority == 'high' %}badge-warning{% else %}badge-ghost{% endif %}">{{ project.get_priority_display }}</div>
+        </div>
+        <div>
+            <div class="text-xs text-base-content/40 mb-1">Start Date</div>
+            <div class="text-sm font-mono">{{ project.start_date|date:"d/m/Y" }}</div>
+        </div>
+        <div>
+            <div class="text-xs text-base-content/40 mb-1">End Date</div>
+            <div class="text-sm font-mono">{{ project.end_date|date:"d/m/Y"|default:"TBD" }}</div>
+        </div>
+        <div>
+            <div class="text-xs text-base-content/40 mb-1">Budget</div>
+            <div class="text-sm font-mono text-amber-400">£{{ project.budget|floatformat:0 }}</div>
+        </div>
+        <div>
+            <div class="text-xs text-base-content/40 mb-1">Progress</div>
+            <div class="text-sm font-mono text-green-400">{{ project.progress }}%</div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <progress class="progress progress-success w-full h-2" value="{{ project.progress }}" max="100"></progress>
+    </div>
+</div>
+
+<!-- Task Pipeline -->
+<div class="grid grid-cols-5 gap-3 mb-6">
+    {% for status, count in task_stats.items %}
+    <div class="ops-card rounded-xl p-3 text-center">
+        <div class="stat-number text-lg
+            {% if status == 'done' %}text-green-400
+            {% elif status == 'in_progress' %}text-amber-400
+            {% elif status == 'review' %}text-cyan-400
+            {% else %}text-base-content/50{% endif %}">{{ count }}</div>
+        <div class="text-[10px] font-mono text-base-content/40 uppercase">{{ status|cut:"_" }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Tasks & Milestones -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="font-semibold text-white mb-4">Tasks ({{ tasks.count }})</h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="text-xs text-base-content/40">
+                            <th>Task</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Assigned</th>
+                            <th>Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr class="hover:bg-base-content/5">
+                            <td class="text-sm">{{ task.title }}</td>
+                            <td><span class="badge badge-xs
+                                {% if task.status == 'done' %}badge-success
+                                {% elif task.status == 'in_progress' %}badge-warning
+                                {% elif task.status == 'review' %}badge-info
+                                {% else %}badge-ghost{% endif %}">{{ task.get_status_display }}</span></td>
+                            <td><span class="badge badge-xs
+                                {% if task.priority == 'urgent' %}badge-error
+                                {% elif task.priority == 'high' %}badge-warning
+                                {% else %}badge-ghost{% endif %}">{{ task.get_priority_display }}</span></td>
+                            <td class="text-xs text-base-content/50">{{ task.assigned_to.get_full_name|default:"Unassigned" }}</td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <progress class="progress progress-warning w-16 h-1" value="{{ task.progress }}" max="100"></progress>
+                                    <span class="font-mono text-xs">{{ task.progress }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center text-base-content/30">No tasks yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="font-semibold text-white mb-4">Milestones</h3>
+            <div class="space-y-3">
+                {% for ms in milestones %}
+                <div class="flex items-start gap-3">
+                    <div class="mt-1">
+                        {% if ms.completed %}
+                        <div class="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        {% else %}
+                        <div class="w-5 h-5 rounded-full border-2 border-base-content/20"></div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm {% if ms.completed %}text-base-content/40 line-through{% else %}text-white{% endif %}">{{ ms.title }}</div>
+                        <div class="text-xs font-mono text-base-content/30">{{ ms.due_date|date:"d M Y" }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-sm text-base-content/30">No milestones set</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

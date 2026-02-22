@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit{% else %}Add{% endif %} Assignment{% endblock %}
+{% block page_title %}{% if editing %}EDIT{% else %}ADD{% endif %} ASSIGNMENT{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <a href="{% url 'planning:plan_detail' plan.pk %}" class="btn btn-sm btn-ghost mb-4 text-base-content/50">← Back to {{ plan.date|date:"d M Y" }}</a>
+
+    <div class="ops-card rounded-xl p-6">
+        <h2 class="text-lg font-bold text-amber-400 mb-1">
+            {% if editing %}Edit Assignment — {{ assignment.team.code }}{% else %}New Assignment{% endif %}
+        </h2>
+        <p class="text-sm text-base-content/40 mb-4">
+            {{ plan.get_shift_display }} Shift · {{ plan.date|date:"l, d F Y" }}
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Team</span></label>
+                    {{ form.team }}
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Area / Location</span></label>
+                    {{ form.area }}
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Task Description</span></label>
+                    {{ form.task_description }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">Priority</span></label>
+                        {{ form.priority }}
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">Estimated Hours</span></label>
+                        {{ form.estimated_hours }}
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Notes</span></label>
+                    {{ form.notes }}
+                </div>
+
+                {% if form.errors %}
+                <div class="alert alert-error text-sm">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}<div>{{ field }}: {{ error }}</div>{% endfor %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="flex justify-end gap-2 pt-4">
+                    <a href="{% url 'planning:plan_detail' plan.pk %}" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-warning gap-1">
+                        {% if editing %}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Save Changes
+                        {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Add Assignment
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

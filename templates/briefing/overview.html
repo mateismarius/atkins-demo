@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Briefing Overview{% endblock %}
+{% block page_title %}BRIEFING OVERVIEW — {{ date|date:"d M Y" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <a href="{% url 'briefing:dashboard' %}" class="btn btn-sm btn-ghost mb-4 text-base-content/50">← Back</a>
+
+    <!-- Summary Banner -->
+    <div class="ops-card rounded-xl p-5 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+                <div class="stat-number text-2xl text-amber-400">{{ forms.count }}</div>
+                <div class="text-xs text-base-content/40">Forms Received</div>
+            </div>
+            <div class="text-center">
+                <div class="stat-number text-2xl text-green-400">{{ total_staff_present }}</div>
+                <div class="text-xs text-base-content/40">Staff Present</div>
+            </div>
+            <div class="text-center">
+                <div class="stat-number text-2xl text-base-content/50">{{ total_staff_expected }}</div>
+                <div class="text-xs text-base-content/40">Staff Expected</div>
+            </div>
+            <div class="text-center">
+                {% if total_staff_expected > 0 %}
+                <div class="stat-number text-2xl {% if total_staff_present >= total_staff_expected %}text-green-400{% else %}text-amber-400{% endif %}">
+                    {% widthratio total_staff_present total_staff_expected 100 %}%
+                </div>
+                {% else %}
+                <div class="stat-number text-2xl text-base-content/30">—</div>
+                {% endif %}
+                <div class="text-xs text-base-content/40">Attendance</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Forms -->
+    <div class="space-y-4">
+        {% for form in forms %}
+        <div class="ops-card rounded-xl p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center font-mono text-xs font-bold text-amber-400">{{ form.team.code }}</div>
+                    <div>
+                        <h3 class="font-semibold text-white">{{ form.team.name }}</h3>
+                        <div class="text-xs text-base-content/40">{{ form.team.area }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="badge risk-{{ form.risk_rating }}">{{ form.get_risk_rating_display }}</div>
+                    <div class="font-mono text-sm">{{ form.staff_present }}/{{ form.staff_expected }}</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div class="p-2 rounded bg-base-content/5">
+                    <span class="text-base-content/40">Equipment</span>
+                    <div class="font-medium mt-1">{{ form.get_equipment_status_display }}</div>
+                </div>
+                <div class="p-2 rounded bg-base-content/5">
+                    <span class="text-base-content/40">PPE Check</span>
+                    <div class="font-medium mt-1 {% if form.ppe_check_completed %}text-green-400{% else %}text-red-400{% endif %}">{% if form.ppe_check_completed %}Done{% else %}Not Done{% endif %}</div>
+                </div>
+                <div class="p-2 rounded bg-base-content/5">
+                    <span class="text-base-content/40">Permits</span>
+                    <div class="font-medium mt-1 {% if form.permits_in_place %}text-green-400{% else %}text-red-400{% endif %}">{% if form.permits_in_place %}In Place{% else %}Missing{% endif %}</div>
+                </div>
+                <div class="p-2 rounded bg-base-content/5">
+                    <span class="text-base-content/40">Weather</span>
+                    <div class="font-medium mt-1">{{ form.get_weather_impact_display }}</div>
+                </div>
+            </div>
+
+            {% if form.planned_tasks_tonight %}
+            <div class="mt-3 p-2 rounded bg-base-content/3 text-xs text-base-content/60">
+                <span class="text-amber-400/60 font-mono">PLANNED:</span> {{ form.planned_tasks_tonight|truncatewords:30 }}
+            </div>
+            {% endif %}
+
+            {% if form.safety_concerns %}
+            <div class="mt-2 p-2 rounded bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+                ⚠ {{ form.safety_concerns }}
+            </div>
+            {% endif %}
+
+            <div class="mt-3 text-right">
+                <a href="{% url 'briefing:form_detail' form.pk %}" class="btn btn-xs btn-ghost text-amber-400">Full Details →</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-12 text-base-content/30">
+            <p class="text-lg">No forms submitted for this date</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

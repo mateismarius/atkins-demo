@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Inspection {{ inspection.id }}{% endblock %}
+{% block page_title %}INSPECTION #{{ inspection.id }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <a href="{% url 'qa:dashboard' %}" class="btn btn-sm btn-ghost mb-4 text-base-content/50">← Back to QA</a>
+    <div class="ops-card rounded-xl p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-white">{{ inspection.area }}</h2>
+                <p class="text-sm text-base-content/40">{{ inspection.project.code }} · {{ inspection.inspection_type }} · {{ inspection.date|date:"d M Y H:i" }}</p>
+            </div>
+            <div class="text-right">
+                <div class="stat-number text-3xl {% if inspection.score >= 80 %}text-green-400{% elif inspection.score >= 60 %}text-amber-400{% else %}text-red-400{% endif %}">{{ inspection.score }}%</div>
+                <div class="badge {% if inspection.status == 'completed' %}badge-success{% elif inspection.status == 'failed' %}badge-error{% else %}badge-ghost{% endif %}">{{ inspection.get_status_display }}</div>
+            </div>
+        </div>
+        <div class="mt-2 text-sm text-base-content/50">{{ compliant }}/{{ total }} items compliant</div>
+        <progress class="progress {% if inspection.score >= 80 %}progress-success{% elif inspection.score >= 60 %}progress-warning{% else %}progress-error{% endif %} w-full h-2 mt-2" value="{{ compliant }}" max="{{ total }}"></progress>
+    </div>
+
+    <div class="ops-card rounded-xl p-5">
+        <h3 class="font-semibold text-white mb-4">Inspection Items</h3>
+        <div class="space-y-2">
+            {% for item in items %}
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-base-content/3">
+                <div class="mt-0.5">
+                    {% if item.is_compliant %}
+                    <div class="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
+                    {% else %}
+                    <div class="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg></div>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <div class="text-sm text-white">{{ item.description }}</div>
+                    {% if item.notes %}<div class="text-xs text-base-content/40 mt-1">{{ item.notes }}</div>{% endif %}
+                </div>
+                <span class="badge badge-xs {% if item.severity == 'critical' %}badge-error{% elif item.severity == 'major' %}badge-warning{% else %}badge-ghost{% endif %}">{{ item.get_severity_display }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

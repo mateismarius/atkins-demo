@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}NCR List{% endblock %}
+{% block page_title %}NON-CONFORMANCE REPORTS{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-2 mb-4">
+    <a href="{% url 'qa:ncr_list' %}" class="btn btn-xs {% if not current_filter %}btn-warning{% else %}btn-ghost{% endif %}">All</a>
+    <a href="?status=open" class="btn btn-xs {% if current_filter == 'open' %}btn-warning{% else %}btn-ghost{% endif %}">Open</a>
+    <a href="?status=investigating" class="btn btn-xs {% if current_filter == 'investigating' %}btn-warning{% else %}btn-ghost{% endif %}">Investigating</a>
+    <a href="?status=corrective_action" class="btn btn-xs {% if current_filter == 'corrective_action' %}btn-warning{% else %}btn-ghost{% endif %}">Corrective Action</a>
+    <a href="?status=closed" class="btn btn-xs {% if current_filter == 'closed' %}btn-warning{% else %}btn-ghost{% endif %}">Closed</a>
+</div>
+
+<div class="ops-card rounded-xl p-5">
+    <table class="table table-sm">
+        <thead><tr class="text-xs text-base-content/40"><th>ID</th><th>Title</th><th>Project</th><th>Severity</th><th>Status</th><th>Raised</th><th>Assigned</th></tr></thead>
+        <tbody>
+            {% for ncr in ncrs %}
+            <tr class="hover:bg-base-content/5">
+                <td class="font-mono text-xs">NCR-{{ ncr.id }}</td>
+                <td class="text-sm">{{ ncr.title }}</td>
+                <td class="font-mono text-xs text-amber-400/70">{{ ncr.project.code }}</td>
+                <td><span class="badge badge-xs {% if ncr.severity == 'critical' %}badge-error{% elif ncr.severity == 'major' %}badge-warning{% else %}badge-ghost{% endif %}">{{ ncr.get_severity_display }}</span></td>
+                <td><span class="badge badge-xs {% if ncr.status == 'closed' %}badge-success{% elif ncr.status == 'corrective_action' %}badge-info{% else %}badge-ghost{% endif %}">{{ ncr.get_status_display }}</span></td>
+                <td class="text-xs">{{ ncr.raised_date|date:"d/m/Y" }}</td>
+                <td class="text-xs">{{ ncr.assigned_to.get_full_name|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-base-content/30">No NCRs found</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

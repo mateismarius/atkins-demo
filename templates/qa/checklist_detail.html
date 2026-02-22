@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}QA Checklist - {{ qa_form.team.code }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-amber-400">QA Inspection: {{ qa_form.team.code }} — {{ qa_form.area_inspected }}</h1>
+            <p class="text-gray-400 mt-1">{{ qa_form.shift_date|date:"l, d M Y" }} | Submitted {{ qa_form.submitted_at|date:"H:i" }}</p>
+        </div>
+        <a href="{% url 'qa:dashboard' %}" class="btn btn-ghost btn-sm">Back</a>
+    </div>
+
+    <!-- Outcome badge -->
+    <div class="mb-6">
+        {% if qa_form.overall_outcome == 'approved' %}
+        <div class="badge badge-success badge-lg gap-2 p-4 text-lg">APPROVED</div>
+        {% elif qa_form.overall_outcome == 'conditional' %}
+        <div class="badge badge-warning badge-lg gap-2 p-4 text-lg">CONDITIONAL</div>
+        {% elif qa_form.overall_outcome == 'rework' %}
+        <div class="badge badge-error badge-lg gap-2 p-4 text-lg">REWORK REQUIRED</div>
+        {% else %}
+        <div class="badge badge-error badge-lg gap-2 p-4 text-lg">REJECTED</div>
+        {% endif %}
+        <span class="ml-3 text-gray-400">Compliance: {{ qa_form.compliance_percentage }}% ({{ qa_form.pass_count }}/{{ qa_form.total_checks }})</span>
+    </div>
+
+    <!-- Checks grid -->
+    <div class="card bg-base-200 shadow-lg mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-cyan-400 mb-4">Inspection Checklist</h2>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead><tr><th>Check Item</th><th class="text-center">Status</th></tr></thead>
+                    <tbody>
+                        {% with checks="materials_correct:Correct Materials,materials_stored_properly:Materials Stored Properly,work_to_method_statement:Work to Method Statement,work_to_drawings:Work to Drawings,area_clean_tidy:Area Clean & Tidy,waste_segregated:Waste Segregated,barriers_signage:Barriers & Signage,ppe_compliant:PPE Compliant,existing_services_protected:Services Protected,completed_work_protected:Completed Work Protected" %}
+                        {% for check in checks.split %}
+                        {% endfor %}
+                        {% endwith %}
+                        <tr><td>Correct Materials</td><td class="text-center">{% if qa_form.materials_correct %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>Materials Stored Properly</td><td class="text-center">{% if qa_form.materials_stored_properly %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>Work to Method Statement</td><td class="text-center">{% if qa_form.work_to_method_statement %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>Work to Drawings</td><td class="text-center">{% if qa_form.work_to_drawings %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>Area Clean & Tidy</td><td class="text-center">{% if qa_form.area_clean_tidy %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>Waste Segregated</td><td class="text-center">{% if qa_form.waste_segregated %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>Barriers & Signage</td><td class="text-center">{% if qa_form.barriers_signage %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>PPE Compliant</td><td class="text-center">{% if qa_form.ppe_compliant %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>Existing Services Protected</td><td class="text-center">{% if qa_form.existing_services_protected %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                        <tr><td>Completed Work Protected</td><td class="text-center">{% if qa_form.completed_work_protected %}<span class="badge badge-success">PASS</span>{% else %}<span class="badge badge-error">FAIL</span>{% endif %}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if qa_form.snags_identified %}
+    <div class="card bg-base-200 shadow-lg mb-6 border border-amber-400/30">
+        <div class="card-body">
+            <h2 class="card-title text-amber-400">Snags ({{ qa_form.snags_count }})</h2>
+            <p class="whitespace-pre-wrap">{{ qa_form.snags_identified }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if qa_form.inspector_comments %}
+    <div class="card bg-base-200 shadow-lg mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-cyan-400">Inspector Comments</h2>
+            <p class="whitespace-pre-wrap">{{ qa_form.inspector_comments }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

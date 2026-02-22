@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Copy Plan{% endblock %}
+{% block page_title %}COPY SHIFT PLAN{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <a href="{% url 'planning:plan_detail' source_plan.pk %}" class="btn btn-sm btn-ghost mb-4 text-base-content/50">← Back</a>
+
+    <div class="ops-card rounded-xl p-6">
+        <h2 class="text-lg font-bold text-amber-400 mb-2">Copy Plan to New Date</h2>
+        <p class="text-sm text-base-content/40 mb-4">
+            Copying from <span class="font-bold text-white">{{ source_plan.date|date:"d M Y" }}</span>
+            ({{ source_plan.get_shift_display }} shift) — {{ source_assignments.count }} assignments
+        </p>
+
+        <!-- Preview assignments being copied -->
+        <div class="mb-6 p-3 bg-base-300/50 rounded-lg">
+            <div class="text-xs font-mono text-base-content/30 mb-2">ASSIGNMENTS TO COPY</div>
+            {% for a in source_assignments %}
+            <div class="flex items-center gap-2 text-xs text-base-content/50 py-1">
+                <span class="font-mono font-bold text-amber-400/70">{{ a.team.code }}</span>
+                <span>{{ a.area }}</span>
+                <span class="text-base-content/30">·</span>
+                <span class="truncate">{{ a.task_description|truncatechars:40 }}</span>
+                <span class="badge badge-xs
+                    {% if a.priority == 'critical' %}badge-error
+                    {% elif a.priority == 'high' %}badge-warning
+                    {% else %}badge-ghost{% endif %} ml-auto">{{ a.get_priority_display }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-control mb-6">
+                <label class="label"><span class="label-text font-bold">New Date</span></label>
+                <input type="date" name="new_date" class="input input-bordered w-full" required>
+                <label class="label"><span class="label-text-alt text-base-content/30">All assignments will be set to "Planned" status</span></label>
+            </div>
+
+            {% if messages %}
+            {% for msg in messages %}
+            <div class="alert alert-error text-sm mb-4">{{ msg }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <div class="flex justify-end gap-2">
+                <a href="{% url 'planning:plan_detail' source_plan.pk %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-warning gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                    Copy {{ source_assignments.count }} Assignments
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

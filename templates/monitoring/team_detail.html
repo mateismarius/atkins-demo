@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Team {{ team.code }}{% endblock %}
+{% block page_title %}TEAM: {{ team.code }} — {{ team.name }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'monitoring:dashboard' %}" class="btn btn-sm btn-ghost mb-4 text-base-content/50">← Back to Monitoring</a>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-4">
+        {% if status %}
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="text-xs font-mono text-amber-400/60 uppercase mb-3">Current Status</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div><span class="text-xs text-base-content/40">Task</span><div class="text-sm text-white mt-1">{{ status.current_task }}</div></div>
+                <div><span class="text-xs text-base-content/40">Location</span><div class="text-sm text-white mt-1">{{ status.location }}</div></div>
+                <div><span class="text-xs text-base-content/40">Staff</span><div class="font-mono text-white mt-1">{{ status.staff_count }}</div></div>
+                <div><span class="text-xs text-base-content/40">Progress</span>
+                    <div class="flex items-center gap-2 mt-1"><progress class="progress progress-warning w-full h-2" value="{{ status.progress }}" max="100"></progress><span class="font-mono text-sm">{{ status.progress }}%</span></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="text-xs font-mono text-amber-400/60 uppercase mb-3">Activity Log</h3>
+            <div class="space-y-1 max-h-96 overflow-y-auto">
+                {% for log in logs %}
+                <div class="flex items-center gap-3 p-2 rounded hover:bg-base-content/3 text-xs">
+                    <span class="font-mono text-base-content/20 w-12">{{ log.timestamp|time:"H:i" }}</span>
+                    <span class="badge badge-xs {% if log.action == 'incident' %}badge-error{% elif log.action == 'task_completed' %}badge-success{% else %}badge-ghost{% endif %}">{{ log.get_action_display }}</span>
+                    <span class="text-base-content/50 flex-1">{{ log.details }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="text-xs font-mono text-amber-400/60 uppercase mb-3">Team Members</h3>
+            {% for m in members %}
+            <div class="flex items-center gap-3 p-2 rounded hover:bg-base-content/3">
+                <div class="avatar placeholder"><div class="bg-amber-500/15 text-amber-400 rounded-full w-8 h-8"><span class="text-xs">{{ m.user.first_name.0 }}{{ m.user.last_name.0 }}</span></div></div>
+                <div><div class="text-sm text-white">{{ m.user.get_full_name }}</div><div class="text-[10px] text-base-content/40">{{ m.get_role_display }}</div></div>
+                {% if m.is_on_shift %}<span class="badge badge-xs badge-success ml-auto">On Shift</span>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if incidents %}
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="text-xs font-mono text-red-400/60 uppercase mb-3">Recent Incidents</h3>
+            {% for inc in incidents %}
+            <div class="p-2 rounded bg-base-content/3 mb-2">
+                <div class="badge badge-xs {% if inc.is_resolved %}badge-success{% else %}badge-error{% endif %}">{% if inc.is_resolved %}Resolved{% else %}Open{% endif %}</div>
+                <div class="text-sm text-white mt-1">{{ inc.title }}</div>
+                <div class="text-[10px] text-base-content/30">{{ inc.reported_at|timesince }} ago</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

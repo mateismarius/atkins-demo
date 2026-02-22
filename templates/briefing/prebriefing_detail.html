@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Form: {{ form_obj.team.code }}{% endblock %}
+{% block page_title %}PRE-BRIEFING: {{ form_obj.team.code }} — {{ form_obj.shift_date|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <a href="{% url 'briefing:dashboard' %}" class="btn btn-sm btn-ghost mb-4 text-base-content/50">← Back to Briefing</a>
+
+    <!-- Header -->
+    <div class="ops-card rounded-xl p-5 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-white">{{ form_obj.team.name }}</h2>
+                <p class="text-sm font-mono text-base-content/40">{{ form_obj.team.code }} · {{ form_obj.shift_date|date:"d M Y" }}</p>
+            </div>
+            <div class="badge text-sm px-4 py-3 risk-{{ form_obj.risk_rating }}">{{ form_obj.get_risk_rating_display }}</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Staffing -->
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="text-xs font-mono text-amber-400/60 uppercase tracking-wider mb-3">Staffing</h3>
+            <div class="stat-number text-2xl text-white mb-2">{{ form_obj.staff_present }}<span class="text-base text-base-content/30">/{{ form_obj.staff_expected }}</span></div>
+            <progress class="progress {% if form_obj.staff_percentage >= 90 %}progress-success{% elif form_obj.staff_percentage >= 70 %}progress-warning{% else %}progress-error{% endif %} w-full h-2" value="{{ form_obj.staff_percentage }}" max="100"></progress>
+            {% if form_obj.absentees %}<div class="mt-3 p-2 rounded bg-base-content/5 text-xs text-base-content/50">{{ form_obj.absentees }}</div>{% endif %}
+        </div>
+
+        <!-- Equipment -->
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="text-xs font-mono text-amber-400/60 uppercase tracking-wider mb-3">Equipment & Safety</h3>
+            <div class="flex flex-wrap gap-2 mb-3">
+                <span class="badge {% if form_obj.equipment_status == 'all_ok' %}badge-success{% elif form_obj.equipment_status == 'minor_issues' %}badge-warning{% else %}badge-error{% endif %}">{{ form_obj.get_equipment_status_display }}</span>
+                <span class="badge {% if form_obj.ppe_check_completed %}badge-success{% else %}badge-error{% endif %}">PPE {% if form_obj.ppe_check_completed %}✓{% else %}✗{% endif %}</span>
+            </div>
+            {% if form_obj.safety_concerns %}<div class="p-2 rounded bg-red-500/10 border border-red-500/20 text-xs text-red-400">⚠ {{ form_obj.safety_concerns }}</div>{% endif %}
+        </div>
+
+        <!-- Work -->
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="text-xs font-mono text-cyan-400/60 uppercase tracking-wider mb-3">Work Tonight</h3>
+            <div class="text-sm text-base-content/70 whitespace-pre-line">{{ form_obj.planned_tasks_tonight|default:"No tasks specified" }}</div>
+            {% if form_obj.blockers %}<div class="mt-3 p-2 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">Blockers: {{ form_obj.blockers }}</div>{% endif %}
+        </div>
+
+        <!-- Permits & Weather -->
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="text-xs font-mono text-purple-400/60 uppercase tracking-wider mb-3">Permits & Conditions</h3>
+            <div class="flex flex-wrap gap-2 mb-3">
+                <span class="badge {% if form_obj.permits_in_place %}badge-success{% else %}badge-error{% endif %}">Permits {% if form_obj.permits_in_place %}✓{% else %}✗{% endif %}</span>
+                <span class="badge {% if form_obj.method_statements_reviewed %}badge-success{% else %}badge-error{% endif %}">MS Review {% if form_obj.method_statements_reviewed %}✓{% else %}✗{% endif %}</span>
+                <span class="badge {% if form_obj.weather_impact == 'none' %}badge-success{% elif form_obj.weather_impact == 'minor' %}badge-warning{% else %}badge-error{% endif %}">Weather: {{ form_obj.get_weather_impact_display }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if form_obj.additional_notes %}
+    <div class="ops-card rounded-xl p-5 mt-4">
+        <h3 class="text-xs font-mono text-base-content/40 uppercase tracking-wider mb-3">Additional Notes</h3>
+        <p class="text-sm text-base-content/70">{{ form_obj.additional_notes }}</p>
+    </div>
+    {% endif %}
+
+    <div class="text-center text-xs text-base-content/20 font-mono mt-6">
+        Submitted {{ form_obj.submitted_at|timesince }} ago by {{ form_obj.submitted_by.get_full_name|default:"System" }}
+    </div>
+</div>
+{% endblock %}

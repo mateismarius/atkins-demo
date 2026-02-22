@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Planning{% endblock %}
+{% block page_title %}SHIFT PLANNING{% endblock %}
+
+{% block content %}
+<!-- Messages -->
+{% if messages %}
+<div class="mb-4 space-y-2">
+    {% for msg in messages %}
+    <div class="alert {% if msg.tags == 'success' %}alert-success{% elif msg.tags == 'error' %}alert-error{% else %}alert-info{% endif %} text-sm py-2">
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Week Calendar -->
+<div class="ops-card rounded-xl p-5 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-white">Week {{ week_start|date:"d M" }} — {{ week_end|date:"d M Y" }}</h3>
+        <div class="flex gap-2">
+            <a href="{% url 'planning:create_plan' %}" class="btn btn-sm btn-warning gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                New Plan
+            </a>
+            <a href="{% url 'planning:resources' %}" class="btn btn-sm btn-ghost text-amber-400">Resources →</a>
+        </div>
+    </div>
+    <div class="grid grid-cols-7 gap-2">
+        {% for day in calendar_data %}
+        <div class="rounded-xl p-3 text-center {% if day.is_today %}bg-amber-500/10 border border-amber-500/20{% else %}bg-base-content/3{% endif %}
+            {% if day.plan %}cursor-pointer hover:bg-base-content/5{% endif %}"
+            {% if day.plan %}onclick="window.location='{% url 'planning:plan_detail' day.plan.pk %}'"{% endif %}>
+            <div class="text-[10px] font-mono text-base-content/30 uppercase">{{ day.date|date:"D" }}</div>
+            <div class="text-lg font-bold {% if day.is_today %}text-amber-400{% else %}text-white{% endif %}">{{ day.date|date:"d" }}</div>
+            {% if day.plan %}
+            <div class="badge badge-xs badge-success mt-1">{{ day.assignments|length }} tasks</div>
+            {% if day.critical_count > 0 %}<div class="text-[9px] text-red-400 mt-0.5">{{ day.critical_count }} critical</div>{% endif %}
+            {% if day.plan.is_published %}<div class="text-[9px] text-green-400 mt-0.5">Published</div>{% endif %}
+            {% else %}
+            <div class="text-[10px] text-base-content/20 mt-1">No plan</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Tonight's Plan -->
+    <div class="lg:col-span-2">
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="font-semibold text-white mb-4 flex items-center justify-between">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    Tonight's Assignments
+                    {% if tonight_stats.total > 0 %}
+                    <span class="text-xs text-base-content/30 font-normal">({{ tonight_stats.completed }}/{{ tonight_stats.total }} done)</span>
+                    {% endif %}
+                </span>
+                {% if tonight_plan %}
+                <div class="flex gap-1">
+                    <a href="{% url 'planning:add_assignment' tonight_plan.pk %}" class="btn btn-xs btn-ghost text-amber-400" title="Add assignment">+</a>
+                    <a href="{% url 'planning:plan_detail' tonight_plan.pk %}" class="btn btn-xs btn-ghost text-cyan-400">Full View →</a>
+                </div>
+                {% endif %}
+            </h3>
+            {% if tonight_assignments %}
+            <div class="space-y-3">
+                {% for a in tonight_assignments %}
+                <div class="flex items-start gap-4 p-4 rounded-lg bg-base-content/3 border-l-2 {% if a.priority == 'critical' %}border-red-500{% elif a.priority == 'high' %}border-amber-500{% elif a.status == 'completed' %}border-green-500{% else %}border-base-content/20{% endif %}">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center font-mono text-xs font-bold
+                        {% if a.status == 'completed' %}bg-green-500/15 text-green-400
+                        {% elif a.status == 'in_progress' %}bg-amber-500/15 text-amber-400
+                        {% else %}bg-amber-500/15 text-amber-400{% endif %}">
+                        {{ a.team.code }}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm font-semibold text-white">{{ a.team.name }}</span>
+                            <span class="badge badge-xs {% if a.priority == 'critical' %}badge-error{% elif a.priority == 'high' %}badge-warning{% else %}badge-ghost{% endif %}">{{ a.get_priority_display }}</span>
+                            <span class="badge badge-xs {% if a.status == 'completed' %}badge-success{% elif a.status == 'in_progress' %}badge-warning{% else %}badge-info{% endif %}">{{ a.get_status_display }}</span>
+                        </div>
+                        <div class="text-xs text-amber-400/70 mb-1">{{ a.area }}</div>
+                        <div class="text-sm text-base-content/60">{{ a.task_description }}</div>
+                        <div class="flex items-center gap-3 mt-2 text-[10px] text-base-content/30">
+                            <span>Est: {{ a.estimated_hours }}h</span>
+                            {% if a.actual_hours %}<span>Actual: {{ a.actual_hours }}h</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="flex gap-1 shrink-0">
+                        <form method="post" action="{% url 'planning:update_status' a.pk %}" class="flex gap-0.5">
+                            {% csrf_token %}
+                            {% if a.status != 'in_progress' %}<button name="status" value="in_progress" class="btn btn-xs btn-ghost text-amber-400" title="Start">▶</button>{% endif %}
+                            {% if a.status != 'completed' %}<button name="status" value="completed" class="btn btn-xs btn-ghost text-green-400" title="Done">✓</button>{% endif %}
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-base-content/30">
+                <p class="text-sm">No plan set for tonight</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Resources & Teams -->
+    <div class="space-y-6">
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="font-semibold text-white mb-4">Resource Overview</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-base-content/50">Available</span>
+                    <span class="font-mono text-green-400">{{ resource_stats.available }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-base-content/50">In Use</span>
+                    <span class="font-mono text-amber-400">{{ resource_stats.in_use }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-base-content/50">Maintenance</span>
+                    <span class="font-mono text-red-400">{{ resource_stats.maintenance }}</span>
+                </div>
+                <div class="divider my-1"></div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-white">Total</span>
+                    <span class="font-mono text-white">{{ resource_stats.total }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="ops-card rounded-xl p-5">
+            <h3 class="font-semibold text-white mb-4">Teams</h3>
+            <div class="space-y-2">
+                {% for team in teams %}
+                <div class="flex items-center gap-3 p-2 rounded hover:bg-base-content/3">
+                    <div class="w-8 h-8 rounded bg-amber-500/15 flex items-center justify-center font-mono text-[10px] font-bold text-amber-400">{{ team.code }}</div>
+                    <div class="flex-1">
+                        <div class="text-sm text-white">{{ team.name }}</div>
+                        <div class="text-[10px] text-base-content/30">{{ team.area }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Plans History -->
+{% if recent_plans %}
+<div class="ops-card rounded-xl p-5 mt-6">
+    <h3 class="font-semibold text-white mb-4">Recent Plans</h3>
+    <div class="overflow-x-auto">
+        <table class="table table-sm">
+            <thead>
+                <tr class="text-xs text-base-content/40">
+                    <th>Date</th>
+                    <th>Shift</th>
+                    <th class="text-center">Assignments</th>
+                    <th class="text-center">Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in recent_plans %}
+                <tr class="hover:bg-base-content/5 {% if p.date == today %}bg-amber-500/5{% endif %}">
+                    <td class="font-mono text-sm {% if p.date == today %}text-amber-400{% else %}text-white{% endif %}">{{ p.date|date:"d/m/Y" }}</td>
+                    <td class="text-xs">{{ p.get_shift_display }}</td>
+                    <td class="text-center font-mono">{{ p.assignments.count }}</td>
+                    <td class="text-center">
+                        <span class="badge badge-xs {% if p.is_published %}badge-success{% else %}badge-warning{% endif %}">
+                            {% if p.is_published %}Published{% else %}Draft{% endif %}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <div class="flex gap-1 justify-end">
+                            <a href="{% url 'planning:plan_detail' p.pk %}" class="btn btn-ghost btn-xs">View</a>
+                            <a href="{% url 'planning:copy_plan' p.pk %}" class="btn btn-ghost btn-xs text-cyan-400">Copy</a>
+                            <a href="{% url 'planning:plan_pdf' p.pk %}" class="btn btn-ghost btn-xs text-amber-400">PDF</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

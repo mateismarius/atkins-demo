@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Quality Assurance{% endblock %}
+{% block page_title %}QUALITY ASSURANCE{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="ops-card rounded-xl p-4">
+        <div class="text-xs font-mono text-base-content/40 mb-1">Total Inspections</div>
+        <div class="stat-number text-xl text-white">{{ stats.total_inspections }}</div>
+    </div>
+    <div class="ops-card rounded-xl p-4">
+        <div class="text-xs font-mono text-base-content/40 mb-1">Avg Score</div>
+        <div class="stat-number text-xl {% if stats.avg_score >= 80 %}text-green-400{% elif stats.avg_score >= 60 %}text-amber-400{% else %}text-red-400{% endif %}">{{ stats.avg_score }}%</div>
+    </div>
+    <div class="ops-card rounded-xl p-4">
+        <div class="text-xs font-mono text-base-content/40 mb-1">Open NCRs</div>
+        <div class="stat-number text-xl text-amber-400">{{ stats.open_ncrs }}</div>
+    </div>
+    <div class="ops-card rounded-xl p-4">
+        <div class="text-xs font-mono text-base-content/40 mb-1">Critical NCRs</div>
+        <div class="stat-number text-xl text-red-400">{{ stats.critical_ncrs }}</div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Inspections -->
+    <div class="ops-card rounded-xl p-5">
+        <h3 class="font-semibold text-white mb-4">Recent Inspections</h3>
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead><tr class="text-xs text-base-content/40"><th>Project</th><th>Area</th><th>Status</th><th>Score</th><th></th></tr></thead>
+                <tbody>
+                    {% for insp in inspections %}
+                    <tr class="hover:bg-base-content/5">
+                        <td class="text-xs font-mono text-amber-400/70">{{ insp.project.code }}</td>
+                        <td class="text-sm">{{ insp.area }}</td>
+                        <td><span class="badge badge-xs {% if insp.status == 'completed' %}badge-success{% elif insp.status == 'failed' %}badge-error{% elif insp.status == 'in_progress' %}badge-warning{% else %}badge-ghost{% endif %}">{{ insp.get_status_display }}</span></td>
+                        <td class="font-mono text-sm {% if insp.score >= 80 %}text-green-400{% elif insp.score >= 60 %}text-amber-400{% else %}text-red-400{% endif %}">{{ insp.score }}%</td>
+                        <td><a href="{% url 'qa:inspection_detail' insp.pk %}" class="btn btn-xs btn-ghost">View</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-base-content/30">No inspections</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- NCRs -->
+    <div class="ops-card rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-white">Non-Conformance Reports</h3>
+            <a href="{% url 'qa:ncr_list' %}" class="btn btn-xs btn-ghost text-amber-400">View All →</a>
+        </div>
+        <div class="space-y-2">
+            {% for ncr in ncrs %}
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-base-content/3 border-l-2 {% if ncr.severity == 'critical' %}border-red-500{% elif ncr.severity == 'major' %}border-amber-500{% else %}border-base-content/20{% endif %}">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono text-xs text-base-content/40">NCR-{{ ncr.id }}</span>
+                        <span class="badge badge-xs {% if ncr.severity == 'critical' %}badge-error{% elif ncr.severity == 'major' %}badge-warning{% else %}badge-ghost{% endif %}">{{ ncr.get_severity_display }}</span>
+                    </div>
+                    <div class="text-sm text-white mt-1">{{ ncr.title }}</div>
+                    <div class="text-xs text-base-content/40 mt-1">{{ ncr.project.code }} · {{ ncr.raised_date|date:"d/m/Y" }}</div>
+                </div>
+                <span class="badge badge-xs {% if ncr.status == 'closed' %}badge-success{% elif ncr.status == 'corrective_action' %}badge-warning{% else %}badge-ghost{% endif %}">{{ ncr.get_status_display }}</span>
+            </div>
+            {% empty %}
+            <div class="text-center py-6 text-base-content/30 text-sm">No NCRs raised</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

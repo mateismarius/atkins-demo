@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Pre-Briefing Form{% endblock %}
+{% block page_title %}PRE-BRIEFING FORM{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="ops-card rounded-xl p-5 mb-6 glow-amber">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-white">Night Shift Pre-Briefing Form</h2>
+                <p class="text-sm text-base-content/50">Complete this form before the briefing meeting begins. All fields with * are mandatory.</p>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'briefing:form_create' %}">
+        {% csrf_token %}
+
+        <!-- Section 1: Team & Shift -->
+        <div class="ops-card rounded-xl p-5 mb-4">
+            <h3 class="text-sm font-mono tracking-wider uppercase text-amber-400/80 mb-4 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-400">1</span>
+                Team & Shift Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Team *</span></label>
+                    {{ form.team }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Shift Date *</span></label>
+                    {{ form.shift_date }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Staffing -->
+        <div class="ops-card rounded-xl p-5 mb-4">
+            <h3 class="text-sm font-mono tracking-wider uppercase text-amber-400/80 mb-4 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-400">2</span>
+                Staffing
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Staff Present *</span></label>
+                    {{ form.staff_present }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Staff Expected *</span></label>
+                    {{ form.staff_expected }}
+                </div>
+            </div>
+            <div class="form-control mt-3">
+                <label class="label"><span class="label-text text-xs">Absentees (names and reasons)</span></label>
+                {{ form.absentees }}
+            </div>
+        </div>
+
+        <!-- Section 3: Equipment & Safety -->
+        <div class="ops-card rounded-xl p-5 mb-4">
+            <h3 class="text-sm font-mono tracking-wider uppercase text-amber-400/80 mb-4 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-red-500/20 flex items-center justify-center text-xs font-bold text-red-400">3</span>
+                Equipment & Safety
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Equipment Status *</span></label>
+                    {{ form.equipment_status }}
+                </div>
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        {{ form.ppe_check_completed }}
+                        <span class="label-text text-xs">PPE Check Completed</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-control mt-3">
+                <label class="label"><span class="label-text text-xs">Equipment Notes</span></label>
+                {{ form.equipment_notes }}
+            </div>
+            <div class="form-control mt-3">
+                <label class="label">
+                    <span class="label-text text-xs text-red-400 font-medium">⚠ Safety Concerns</span>
+                </label>
+                {{ form.safety_concerns }}
+            </div>
+            <div class="form-control mt-3">
+                <label class="label"><span class="label-text text-xs">Near Misses from Previous Shift</span></label>
+                {{ form.near_misses }}
+            </div>
+        </div>
+
+        <!-- Section 4: Work Status -->
+        <div class="ops-card rounded-xl p-5 mb-4">
+            <h3 class="text-sm font-mono tracking-wider uppercase text-amber-400/80 mb-4 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-cyan-500/20 flex items-center justify-center text-xs font-bold text-cyan-400">4</span>
+                Work Status
+            </h3>
+            <div class="form-control">
+                <label class="label"><span class="label-text text-xs">Pending Tasks from Previous Shift</span></label>
+                {{ form.pending_tasks_from_previous }}
+            </div>
+            <div class="form-control mt-3">
+                <label class="label"><span class="label-text text-xs">Planned Tasks Tonight *</span></label>
+                {{ form.planned_tasks_tonight }}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Blockers / Dependencies</span></label>
+                    {{ form.blockers }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Materials Needed</span></label>
+                    {{ form.materials_needed }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Permits & Compliance -->
+        <div class="ops-card rounded-xl p-5 mb-4">
+            <h3 class="text-sm font-mono tracking-wider uppercase text-amber-400/80 mb-4 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-purple-500/20 flex items-center justify-center text-xs font-bold text-purple-400">5</span>
+                Permits & Compliance
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        {{ form.permits_in_place }}
+                        <span class="label-text text-xs">All Required Permits in Place</span>
+                    </label>
+                </div>
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        {{ form.method_statements_reviewed }}
+                        <span class="label-text text-xs">Method Statements Reviewed</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-control mt-3">
+                <label class="label"><span class="label-text text-xs">Permit Details</span></label>
+                {{ form.permit_details }}
+            </div>
+        </div>
+
+        <!-- Section 6: Weather & Conditions -->
+        <div class="ops-card rounded-xl p-5 mb-4">
+            <h3 class="text-sm font-mono tracking-wider uppercase text-amber-400/80 mb-4 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">6</span>
+                Weather & Conditions
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Weather Impact *</span></label>
+                    {{ form.weather_impact }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs">Weather Notes</span></label>
+                    {{ form.weather_notes }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 7: Risk Assessment & Submit -->
+        <div class="ops-card rounded-xl p-5 mb-4">
+            <h3 class="text-sm font-mono tracking-wider uppercase text-amber-400/80 mb-4 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-400">7</span>
+                Risk Assessment & Additional Notes
+            </h3>
+            <div class="form-control">
+                <label class="label"><span class="label-text text-xs font-medium">Overall Risk Rating *</span></label>
+                {{ form.risk_rating }}
+                <label class="label">
+                    <span class="label-text-alt text-base-content/30">Green = Low Risk, Amber = Medium Risk, Red = High Risk</span>
+                </label>
+            </div>
+            <div class="form-control mt-3">
+                <label class="label"><span class="label-text text-xs">Additional Notes</span></label>
+                {{ form.additional_notes }}
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center justify-between p-4">
+            <a href="{% url 'briefing:dashboard' %}" class="btn btn-ghost">Cancel</a>
+            <button type="submit" class="btn btn-warning btn-lg gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Submit Pre-Briefing Form
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

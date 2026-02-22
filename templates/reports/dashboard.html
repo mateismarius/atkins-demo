@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Night Reports{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-amber-400">Night Reports</h1>
+        <p class="text-gray-400 mt-1">Consolidated shift reports — Briefing + QA + Incidents</p>
+    </div>
+    <a href="{% url 'reports:report_generate' %}" class="btn btn-warning gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Generate Tonight's Report
+    </a>
+</div>
+
+<!-- Tonight's quick stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="card bg-base-200 shadow-lg">
+        <div class="card-body p-4 text-center">
+            <div class="text-3xl font-bold font-mono text-amber-400">{{ briefing_count }}</div>
+            <div class="text-xs text-gray-400 mt-1">Briefing Forms Today</div>
+        </div>
+    </div>
+    <div class="card bg-base-200 shadow-lg">
+        <div class="card-body p-4 text-center">
+            <div class="text-3xl font-bold font-mono text-cyan-400">{{ qa_count }}</div>
+            <div class="text-xs text-gray-400 mt-1">QA Inspections Today</div>
+        </div>
+    </div>
+    <div class="card bg-base-200 shadow-lg">
+        <div class="card-body p-4 text-center">
+            <div class="text-3xl font-bold font-mono {% if incident_count > 0 %}text-red-400{% else %}text-green-400{% endif %}">{{ incident_count }}</div>
+            <div class="text-xs text-gray-400 mt-1">Incidents Today</div>
+        </div>
+    </div>
+    <div class="card bg-base-200 shadow-lg">
+        <div class="card-body p-4 text-center">
+            {% if today_report %}
+            <div class="badge {% if today_report.status == 'approved' %}badge-success{% elif today_report.status == 'reviewed' %}badge-info{% else %}badge-warning{% endif %} badge-lg">{{ today_report.get_status_display }}</div>
+            {% else %}
+            <div class="badge badge-ghost badge-lg">Not Generated</div>
+            {% endif %}
+            <div class="text-xs text-gray-400 mt-1">Tonight's Report</div>
+        </div>
+    </div>
+</div>
+
+<!-- Report History -->
+<div class="card bg-base-200 shadow-lg">
+    <div class="card-body">
+        <h2 class="card-title text-cyan-400 mb-4">Report History</h2>
+        {% if reports %}
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th class="text-center">Teams</th>
+                        <th class="text-center">Staff</th>
+                        <th class="text-center">QA Forms</th>
+                        <th class="text-center">Incidents</th>
+                        <th class="text-center">Risk</th>
+                        <th class="text-center">Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reports %}
+                    <tr class="hover">
+                        <td class="font-mono">{{ r.date|date:"d/m/Y" }}</td>
+                        <td class="text-center">{{ r.briefing_forms_submitted }}/{{ r.total_teams }}</td>
+                        <td class="text-center">{{ r.total_staff_present }}/{{ r.total_staff_expected }}</td>
+                        <td class="text-center">{{ r.qa_forms_submitted }}</td>
+                        <td class="text-center">
+                            {% if r.incidents_count > 0 %}
+                            <span class="text-red-400 font-bold">{{ r.incidents_count }}</span>
+                            {% else %}
+                            <span class="text-green-400">0</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge {% if r.overall_risk == 'green' %}badge-success{% elif r.overall_risk == 'amber' %}badge-warning{% else %}badge-error{% endif %} badge-sm">{{ r.overall_risk|upper }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge {% if r.status == 'approved' %}badge-success{% elif r.status == 'reviewed' %}badge-info{% elif r.status == 'generated' %}badge-warning{% else %}badge-ghost{% endif %} badge-sm">{{ r.get_status_display }}</span>
+                        </td>
+                        <td class="text-right">
+                            <div class="flex gap-1 justify-end">
+                                <a href="{% url 'reports:report_view' r.date|date:'Y-m-d' %}" class="btn btn-ghost btn-xs">View</a>
+                                <div class="dropdown dropdown-end">
+                                    <label tabindex="0" class="btn btn-ghost btn-xs text-amber-400">PDF ▾</label>
+                                    <ul tabindex="0" class="dropdown-content z-[1] menu p-1 shadow-lg bg-base-300 rounded-box w-44 mt-1">
+                                        <li><a href="{% url 'reports:report_pdf' r.date|date:'Y-m-d' %}" class="text-xs">Full Report</a></li>
+                                        <li><a href="{% url 'reports:briefing_pdf' r.date|date:'Y-m-d' %}" class="text-xs">Briefing</a></li>
+                                        <li><a href="{% url 'reports:qa_pdf' r.date|date:'Y-m-d' %}" class="text-xs">QA</a></li>
+                                        <li><a href="{% url 'reports:incidents_pdf' r.date|date:'Y-m-d' %}" class="text-xs">Incidents</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No reports generated yet. Click "Generate Tonight's Report" to create your first report.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

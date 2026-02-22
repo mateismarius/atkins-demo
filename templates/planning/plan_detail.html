@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Shift Plan — {{ plan.date|date:"d/m/Y" }}{% endblock %}
+{% block page_title %}SHIFT PLAN — {{ plan.date|date:"d M Y" }}{% endblock %}
+
+{% block content %}
+<!-- Messages -->
+{% if messages %}
+<div class="mb-4 space-y-2">
+    {% for msg in messages %}
+    <div class="alert {% if msg.tags == 'success' %}alert-success{% elif msg.tags == 'error' %}alert-error{% else %}alert-info{% endif %} text-sm py-2">
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Header bar -->
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div class="flex items-center gap-3">
+        <a href="{% url 'planning:dashboard' %}" class="btn btn-sm btn-ghost text-base-content/50">← Back</a>
+        <span class="badge {% if plan.is_published %}badge-success{% else %}badge-warning{% endif %} badge-lg">
+            {% if plan.is_published %}Published{% else %}Draft{% endif %}
+        </span>
+        <span class="text-sm text-base-content/40">{{ plan.get_shift_display }} Shift · {{ plan.date|date:"l, d F Y" }}</span>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+        <a href="{% url 'planning:add_assignment' plan.pk %}" class="btn btn-sm btn-warning gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Assignment
+        </a>
+        <a href="{% url 'planning:copy_plan' plan.pk %}" class="btn btn-sm btn-ghost gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+            Copy Plan
+        </a>
+        <form method="post" action="{% url 'planning:toggle_publish' plan.pk %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm {% if plan.is_published %}btn-ghost{% else %}btn-success{% endif %} gap-1">
+                {% if plan.is_published %}Unpublish{% else %}Publish{% endif %}
+            </button>
+        </form>
+        <a href="{% url 'planning:plan_pdf' plan.pk %}" class="btn btn-sm btn-ghost text-amber-400 gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            PDF
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+    <div class="ops-card rounded-xl p-3 text-center">
+        <div class="stat-number text-xl text-white">{{ stats.total }}</div>
+        <div class="text-[10px] font-mono text-base-content/40">TOTAL</div>
+    </div>
+    <div class="ops-card rounded-xl p-3 text-center">
+        <div class="stat-number text-xl text-green-400">{{ stats.completed }}</div>
+        <div class="text-[10px] font-mono text-base-content/40">COMPLETED</div>
+    </div>
+    <div class="ops-card rounded-xl p-3 text-center">
+        <div class="stat-number text-xl text-amber-400">{{ stats.in_progress }}</div>
+        <div class="text-[10px] font-mono text-base-content/40">IN PROGRESS</div>
+    </div>
+    <div class="ops-card rounded-xl p-3 text-center">
+        <div class="stat-number text-xl text-cyan-400">{{ stats.planned }}</div>
+        <div class="text-[10px] font-mono text-base-content/40">PLANNED</div>
+    </div>
+    <div class="ops-card rounded-xl p-3 text-center">
+        <div class="stat-number text-xl text-red-400">{{ stats.deferred }}</div>
+        <div class="text-[10px] font-mono text-base-content/40">DEFERRED</div>
+    </div>
+    <div class="ops-card rounded-xl p-3 text-center">
+        <div class="stat-number text-xl text-white">{{ stats.total_est_hours }}h</div>
+        <div class="text-[10px] font-mono text-base-content/40">EST. HOURS</div>
+    </div>
+    <div class="ops-card rounded-xl p-3 text-center">
+        <div class="stat-number text-xl text-amber-400">{{ stats.total_actual_hours }}h</div>
+        <div class="text-[10px] font-mono text-base-content/40">ACTUAL HOURS</div>
+    </div>
+</div>
+
+<!-- Plan Notes -->
+{% if plan.notes %}
+<div class="ops-card rounded-xl p-4 mb-6 border border-amber-500/10">
+    <div class="text-xs font-mono text-base-content/30 mb-1">PLAN NOTES</div>
+    <div class="text-sm text-base-content/60">{{ plan.notes }}</div>
+</div>
+{% endif %}
+
+<!-- Assignments -->
+<div class="space-y-3">
+    {% for a in assignments %}
+    <div class="ops-card rounded-xl p-5 border-l-4
+        {% if a.priority == 'critical' %}border-red-500 {% if a.status != 'completed' %}bg-red-500/5{% endif %}
+        {% elif a.priority == 'high' %}border-amber-500
+        {% elif a.status == 'completed' %}border-green-500
+        {% elif a.status == 'deferred' %}border-base-content/20
+        {% else %}border-base-content/10{% endif %}">
+
+        <div class="flex items-start gap-4">
+            <!-- Team Badge -->
+            <div class="w-12 h-12 rounded-lg flex items-center justify-center font-mono text-sm font-bold shrink-0
+                {% if a.status == 'completed' %}bg-green-500/15 text-green-400
+                {% elif a.status == 'in_progress' %}bg-amber-500/15 text-amber-400
+                {% elif a.status == 'deferred' %}bg-base-content/10 text-base-content/30
+                {% else %}bg-cyan-500/15 text-cyan-400{% endif %}">
+                {{ a.team.code }}
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="text-sm font-bold text-white">{{ a.team.name }}</span>
+                    <span class="badge badge-xs
+                        {% if a.priority == 'critical' %}badge-error
+                        {% elif a.priority == 'high' %}badge-warning
+                        {% elif a.priority == 'low' %}badge-ghost
+                        {% else %}badge-info{% endif %}">{{ a.get_priority_display }}</span>
+                    <span class="badge badge-xs
+                        {% if a.status == 'completed' %}badge-success
+                        {% elif a.status == 'in_progress' %}badge-warning
+                        {% elif a.status == 'deferred' %}badge-ghost
+                        {% else %}badge-info{% endif %}">{{ a.get_status_display }}</span>
+                </div>
+                <div class="text-xs text-amber-400/70 mb-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                    {{ a.area }}
+                </div>
+                <div class="text-sm text-base-content/60">{{ a.task_description }}</div>
+
+                {% if a.notes %}
+                <div class="text-xs text-base-content/40 mt-1 italic">{{ a.notes }}</div>
+                {% endif %}
+
+                <div class="flex items-center gap-4 mt-2 text-[10px] text-base-content/30">
+                    <span>Est: {{ a.estimated_hours }}h</span>
+                    {% if a.actual_hours %}<span>Actual: {{ a.actual_hours }}h</span>{% endif %}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col gap-1 shrink-0">
+                <!-- Quick Status -->
+                <form method="post" action="{% url 'planning:update_status' a.pk %}" class="flex gap-1">
+                    {% csrf_token %}
+                    {% if a.status != 'in_progress' %}
+                    <button name="status" value="in_progress" class="btn btn-xs btn-ghost text-amber-400" title="Start">▶</button>
+                    {% endif %}
+                    {% if a.status != 'completed' %}
+                    <button name="status" value="completed" class="btn btn-xs btn-ghost text-green-400" title="Complete">✓</button>
+                    {% endif %}
+                    {% if a.status != 'deferred' %}
+                    <button name="status" value="deferred" class="btn btn-xs btn-ghost text-base-content/30" title="Defer">⏸</button>
+                    {% endif %}
+                </form>
+                <!-- Edit/Delete -->
+                <div class="flex gap-1">
+                    <a href="{% url 'planning:edit_assignment' a.pk %}" class="btn btn-xs btn-ghost text-cyan-400" title="Edit">✎</a>
+                    <a href="{% url 'planning:delete_assignment' a.pk %}" class="btn btn-xs btn-ghost text-red-400" title="Delete">✕</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-12 text-base-content/30">
+        <p class="text-lg mb-2">No assignments yet</p>
+        <a href="{% url 'planning:add_assignment' plan.pk %}" class="btn btn-warning btn-sm">Add First Assignment</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

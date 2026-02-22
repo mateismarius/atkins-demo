@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Delete Assignment{% endblock %}
+{% block page_title %}DELETE ASSIGNMENT{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="ops-card rounded-xl p-6">
+        <div class="text-center mb-6">
+            <div class="text-4xl mb-3">⚠️</div>
+            <h2 class="text-lg font-bold text-red-400">Delete Assignment?</h2>
+            <p class="text-sm text-base-content/40 mt-2">This action cannot be undone.</p>
+        </div>
+
+        <div class="bg-base-300/50 rounded-lg p-4 mb-6">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="font-mono font-bold text-amber-400">{{ assignment.team.code }}</span>
+                <span class="font-semibold text-white">{{ assignment.team.name }}</span>
+            </div>
+            <div class="text-xs text-base-content/50 mb-1">{{ assignment.area }}</div>
+            <div class="text-sm text-base-content/60">{{ assignment.task_description }}</div>
+            <div class="text-xs text-base-content/30 mt-2">
+                Priority: {{ assignment.get_priority_display }} · Est: {{ assignment.estimated_hours }}h
+            </div>
+        </div>
+
+        <div class="flex justify-center gap-3">
+            <a href="{% url 'planning:plan_detail' assignment.plan.pk %}" class="btn btn-ghost">Cancel</a>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-error gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Delete Assignment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
