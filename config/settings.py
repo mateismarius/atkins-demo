@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'demo-secret-key-change-in-production'
 DEBUG = True
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+CSRF_TRUSTED_ORIGINS = ["https://atkins-demo-y8hoj.ondigitalocean.app"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
